@@ -1,0 +1,68 @@
+resource "aws_vpc" "myvpc" {
+  cidr_block = var.vpc_cidr
+  tags = var.tag
+}
+
+resource "aws_subnet" "public_subnet" {
+  for_each=toset(var.public_subnets_cnt)
+  vpc_id     = aws_vpc.myvpc.id
+  cidr_block = each.value
+  tags = {
+    Name = lookup(var.public_subnets[each.value],"Name")
+    ENV = lookup(var.public_subnets[each.value],"ENV")
+  }
+}
+
+
+
+resource "aws_subnet" "private_subnet" {
+  for_each=toset(var.private_subnets_cnt)
+  vpc_id     = aws_vpc.myvpc.id
+  cidr_block = lookup(var.private_subnets[each.value],"cidr")
+  tags = {
+    Name = lookup(var.private_subnets[each.value],"Name")
+    ENV = lookup(var.private_subnets[each.value],"ENV")
+  }
+}
+
+resource "aws_internet_gateway" "myig" {
+  vpc_id = aws_vpc.myvpc.id
+  tags = var.tag 
+}
+
+#resource "aws_route_table_association" "ra" {
+#  subnet_id = [aws_subnet.public_subnet_1.id,aws_subnet.public_subnet_2.id]
+#  route_table_id = aws_route_table.public_route_table.id
+#}
+resource "aws_route_table" "public_route_table" {
+    propagating_vgws = [] 
+    #subnet_id = [aws_subnet.public_subnet_1.id,aws_subnet.public_subnet_2.id]
+    #subnet_id = aws_subnet.public_subnet_1
+    route            = [
+      {
+          cidr_block                = "0.0.0.0/0"
+          egress_only_gateway_id    = ""
+          gateway_id                = "igw-0700b54d43181e7d6"
+          instance_id               = ""
+          ipv6_cidr_block           = ""
+          nat_gateway_id            = ""
+          network_interface_id      = ""
+          transit_gateway_id        = ""
+          vpc_peering_connection_id = ""
+        },
+    ]
+    tags             = {
+        "Env"  = "DEV"
+        "Name" = "TF_Public_Route_Table"
+    }
+    vpc_id           = aws_vpc.myvpc.id
+}
+resource "aws_route_table" "private_route_table" {
+    propagating_vgws = []
+    route            = []
+    tags             = {
+        "Env"  = "DEV"
+        "Name" = "TF_Private_Route_Table"
+    }
+    vpc_id           = aws_vpc.myvpc.id
+}
