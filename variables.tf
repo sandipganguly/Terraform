@@ -8,11 +8,10 @@ variable Base_Tag {
 
 variable region {
   type = string
-  default ="us-east-2"
 }
+
 variable vpc_cidr {
   type = string
-#  default = "10.2.0.0/16"
 }
 
 variable public_subnet {
